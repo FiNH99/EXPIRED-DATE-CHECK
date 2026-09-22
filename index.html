@@ -7,164 +7,243 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>📦 Inventory Ops</h1>
-  <div class="operator">
-    <label>Operator:</label>
-    <input id="operator" placeholder="nama kamu" autocomplete="off">
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <h1>🔐 Login Inventory Ops</h1>
+    <div id="login-alert" class="alert hidden"></div>
+    <label>Username</label>
+    <input id="login-user" autocomplete="username">
+    <label>Password</label>
+    <input id="login-pass" type="password" autocomplete="current-password">
+    <button id="login-btn" class="primary">Masuk</button>
+    <p class="hint">Default: admin/admin123 · staff1/staff123</p>
   </div>
-</header>
+</div>
 
-<nav class="tabs">
-  <button class="tab active" data-tab="expiry">Cek Expired</button>
-  <button class="tab" data-tab="soh">SOH</button>
-  <button class="tab" data-tab="rtc">Input RTC</button>
-  <button class="tab" data-tab="req">Req Order</button>
-</nav>
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <header>
+    <h1>📦 Inventory Ops</h1>
+    <div class="operator">
+      <span id="user-label"></span>
+      <button id="logout-btn" class="link">Logout</button>
+    </div>
+  </header>
 
-<main>
-  <!-- ============ CEK EXPIRED ============ -->
-  <section class="tab-panel active" id="tab-expiry">
-    <div class="card">
-      <h2>🔍 Input Pengecekan Expired</h2>
+  <nav class="tabs">
+    <button class="tab active" data-tab="expiry">Cek Expired</button>
+    <button class="tab" data-tab="soh">SOH</button>
+    <button class="tab" data-tab="rtc">Input RTC</button>
+    <button class="tab" data-tab="req">Req Order</button>
+    <button class="tab" data-tab="dash">Dashboard</button>
+    <button class="tab" data-tab="approve" data-role="manager">Approval</button>
+  </nav>
 
-      <label>Scan / Input Barcode</label>
-      <input class="barcode-input" id="exp-barcode" autofocus autocomplete="off"
-             placeholder="Scan barcode di sini..." data-lookup="exp">
+  <main>
+    <!-- ============ CEK EXPIRED ============ -->
+    <section class="tab-panel active" id="tab-expiry">
+      <div class="card">
+        <h2>🔍 Input Pengecekan Expired</h2>
 
-      <div id="exp-info" class="info hidden">
-        <div><b>SKU:</b> <span data-f="sku">-</span></div>
-        <div><b>Dept:</b> <span data-f="dept">-</span></div>
-        <div><b>Desc:</b> <span data-f="desc">-</span></div>
-        <div><b>Returnable:</b> <span data-f="ret">-</span></div>
-      </div>
+        <label>Scan / Input Barcode</label>
+        <input class="barcode-input" id="exp-barcode" autofocus autocomplete="off"
+               placeholder="Scan barcode di sini..." data-lookup="exp">
 
-      <div id="exp-alert" class="alert hidden"></div>
-
-      <form id="exp-form">
-        <div class="grid">
-          <div><label>Qty</label><input id="exp-qty" type="number" min="1" required></div>
-          <div><label>Exp Date</label><input id="exp-date" type="date" required></div>
-          <div>
-            <label>Lokasi</label>
-            <select id="exp-location" required>
-              <option value="">-- pilih --</option>
-              <option value="backroom">Backroom</option>
-              <option value="selling">Selling</option>
-            </select>
-          </div>
-          <div><label>No. Gondola Expired</label><input id="exp-gondola" placeholder="contoh: G-01"></div>
+        <div id="exp-info" class="info hidden">
+          <div><b>SKU:</b> <span data-f="sku">-</span></div>
+          <div><b>Dept:</b> <span data-f="dept">-</span></div>
+          <div><b>Desc:</b> <span data-f="desc">-</span></div>
+          <div><b>Returnable:</b> <span data-f="ret">-</span></div>
         </div>
-        <button type="submit">Simpan Pengecekan</button>
-      </form>
-    </div>
-  </section>
 
-  <!-- ============ SOH ============ -->
-  <section class="tab-panel" id="tab-soh">
-    <div class="card">
-      <h2>📊 Input SOH</h2>
+        <div id="exp-alert" class="alert hidden"></div>
 
-      <label>Scan / Input Barcode</label>
-      <input class="barcode-input" id="soh-barcode" autocomplete="off"
-             placeholder="Scan barcode di sini..." data-lookup="soh">
-
-      <div id="soh-info" class="info hidden">
-        <div><b>SKU:</b> <span data-f="sku">-</span></div>
-        <div><b>Dept:</b> <span data-f="dept">-</span></div>
-        <div><b>Desc:</b> <span data-f="desc">-</span></div>
-      </div>
-
-      <div id="soh-alert" class="alert hidden"></div>
-
-      <form id="soh-form">
-        <div class="grid">
-          <div><label>Qty On Hand</label><input id="soh-qty" type="number" min="0" required></div>
-          <div>
-            <label>Lokasi</label>
-            <select id="soh-location" required>
-              <option value="">-- pilih --</option>
-              <option value="backroom">Backroom</option>
-              <option value="selling">Selling</option>
-            </select>
+        <form id="exp-form">
+          <div class="grid">
+            <div><label>Qty</label><input id="exp-qty" type="number" min="1" required></div>
+            <div><label>Exp Date</label><input id="exp-date" type="date" required></div>
+            <div>
+              <label>Lokasi</label>
+              <select id="exp-location" required>
+                <option value="">-- pilih --</option>
+                <option value="backroom">Backroom</option>
+                <option value="selling">Selling</option>
+              </select>
+            </div>
+            <div><label>No. Gondola Expired</label><input id="exp-gondola" placeholder="contoh: G-01"></div>
           </div>
-          <div><label>No. Gondola</label><input id="soh-gondola"></div>
-          <div><label>Catatan</label><input id="soh-note"></div>
-        </div>
-        <button type="submit">Simpan SOH</button>
-      </form>
-    </div>
-  </section>
-
-  <!-- ============ RTC ============ -->
-  <section class="tab-panel" id="tab-rtc">
-    <div class="card">
-      <h2>↩️ Input RTC</h2>
-
-      <label>Scan / Input Barcode</label>
-      <input class="barcode-input" id="rtc-barcode" autocomplete="off"
-             placeholder="Scan barcode di sini..." data-lookup="rtc">
-
-      <div id="rtc-info" class="info hidden">
-        <div><b>SKU:</b> <span data-f="sku">-</span></div>
-        <div><b>Desc:</b> <span data-f="desc">-</span></div>
+          <button type="submit">Simpan Pengecekan</button>
+        </form>
       </div>
+    </section>
 
-      <div id="rtc-alert" class="alert hidden"></div>
+    <!-- ============ SOH ============ -->
+    <section class="tab-panel" id="tab-soh">
+      <div class="card">
+        <h2>📊 Input SOH</h2>
 
-      <form id="rtc-form">
-        <div class="grid">
-          <div><label>Qty</label><input id="rtc-qty" type="number" min="1" required></div>
-          <div>
-            <label>Reason</label>
-            <select id="rtc-reason" required>
-              <option value="">-- pilih --</option>
-              <option>Rusak</option>
-              <option>Expired</option>
-              <option>Tidak Laku</option>
-              <option>Salah Order</option>
-              <option>Lainnya</option>
-            </select>
+        <label>Scan / Input Barcode</label>
+        <input class="barcode-input" id="soh-barcode" autocomplete="off"
+               placeholder="Scan barcode di sini..." data-lookup="soh">
+
+        <div id="soh-info" class="info hidden">
+          <div><b>SKU:</b> <span data-f="sku">-</span></div>
+          <div><b>Dept:</b> <span data-f="dept">-</span></div>
+          <div><b>Desc:</b> <span data-f="desc">-</span></div>
+        </div>
+
+        <div id="soh-alert" class="alert hidden"></div>
+
+        <form id="soh-form">
+          <div class="grid">
+            <div><label>Qty On Hand</label><input id="soh-qty" type="number" min="0" required></div>
+            <div>
+              <label>Lokasi</label>
+              <select id="soh-location" required>
+                <option value="">-- pilih --</option>
+                <option value="backroom">Backroom</option>
+                <option value="selling">Selling</option>
+              </select>
+            </div>
+            <div><label>No. Gondola</label><input id="soh-gondola"></div>
+            <div><label>Catatan</label><input id="soh-note"></div>
           </div>
+          <button type="submit">Simpan SOH</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ RTC ============ -->
+    <section class="tab-panel" id="tab-rtc">
+      <div class="card">
+        <h2>↩️ Input RTC</h2>
+
+        <label>Scan / Input Barcode</label>
+        <input class="barcode-input" id="rtc-barcode" autocomplete="off"
+               placeholder="Scan barcode di sini..." data-lookup="rtc">
+
+        <div id="rtc-info" class="info hidden">
+          <div><b>SKU:</b> <span data-f="sku">-</span></div>
+          <div><b>Dept:</b> <span data-f="dept">-</span></div>
+          <div><b>Desc:</b> <span data-f="desc">-</span></div>
         </div>
-        <button type="submit">Simpan RTC</button>
-      </form>
-    </div>
-  </section>
 
-  <!-- ============ REQ ORDER ============ -->
-  <section class="tab-panel" id="tab-req">
-    <div class="card">
-      <h2>🛒 Request Order</h2>
+        <div id="rtc-alert" class="alert hidden"></div>
 
-      <div class="grid">
-        <div><label>Requested By</label><input id="req-by" readonly></div>
-        <div><label>Dept</label><input id="req-dept" placeholder="contoh: FOOD"></div>
-        <div class="wide"><label>Catatan</label><input id="req-note"></div>
+        <form id="rtc-form">
+          <div class="grid">
+            <div><label>Qty</label><input id="rtc-qty" type="number" min="1" required></div>
+            <div>
+              <label>Reason</label>
+              <select id="rtc-reason" required>
+                <option value="">-- pilih --</option>
+                <option>Rusak</option>
+                <option>Expired</option>
+                <option>Tidak Laku</option>
+                <option>Salah Order</option>
+                <option>Lainnya</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit">Simpan RTC</button>
+        </form>
       </div>
+    </section>
 
-      <label>Scan / Input Barcode</label>
-      <input class="barcode-input" id="req-barcode" autocomplete="off"
-             placeholder="Scan barcode lalu Enter..." data-lookup="req">
+    <!-- ============ REQ ORDER ============ -->
+    <section class="tab-panel" id="tab-req">
+      <div class="card">
+        <h2>🛒 Request Order</h2>
 
-      <div id="req-alert" class="alert hidden"></div>
+        <div class="grid">
+          <div><label>Requested By</label><input id="req-by" readonly></div>
+          <div><label>Dept</label><input id="req-dept" placeholder="contoh: FOOD"></div>
+          <div class="wide"><label>Catatan</label><input id="req-note"></div>
+        </div>
 
-      <div class="cart">
-        <table>
-          <thead>
-            <tr>
-              <th>Barcode</th><th>SKU</th><th>Desc</th>
-              <th>Qty</th><th>Unit</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="req-items"></tbody>
-        </table>
+        <label>Scan / Input Barcode</label>
+        <input class="barcode-input" id="req-barcode" autocomplete="off"
+               placeholder="Scan barcode lalu Enter..." data-lookup="req">
+
+        <div id="req-alert" class="alert hidden"></div>
+
+        <div class="cart">
+          <table>
+            <thead>
+              <tr>
+                <th>Barcode</th><th>SKU</th><th>Desc</th>
+                <th>Qty</th><th>Unit</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="req-items"></tbody>
+          </table>
+        </div>
+
+        <button id="req-submit" class="primary">Kirim Request Order</button>
       </div>
+    </section>
 
-      <button id="req-submit" class="primary">Kirim Request Order</button>
-    </div>
-  </section>
-</main>
+    <!-- ============ DASHBOARD ============ -->
+    <section class="tab-panel" id="tab-dash">
+      <div class="card">
+        <h2>⚠️ Dashboard Expired</h2>
+        <div class="dash-controls">
+          <label>Window (hari):</label>
+          <input id="dash-days" type="number" value="30" min="1" max="365">
+          <button id="dash-refresh" class="link">Refresh</button>
+        </div>
+        <div id="dash-summary" class="summary"></div>
+
+        <h3 class="sub">🔴 Sudah Expired</h3>
+        <div class="cart">
+          <table id="dash-expired-table">
+            <thead>
+              <tr>
+                <th>Barcode</th><th>Desc</th><th>Dept</th><th>Qty</th>
+                <th>Exp</th><th>Hari</th><th>Lokasi</th><th>Gondola</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3 class="sub">🟡 Akan Expired</h3>
+        <div class="cart">
+          <table id="dash-soon-table">
+            <thead>
+              <tr>
+                <th>Barcode</th><th>Desc</th><th>Dept</th><th>Qty</th>
+                <th>Exp</th><th>Hari</th><th>Lokasi</th><th>Gondola</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ APPROVAL ============ -->
+    <section class="tab-panel" id="tab-approve">
+      <div class="card">
+        <h2>✅ Approval Req Order</h2>
+        <div id="approve-alert" class="alert hidden"></div>
+        <div class="cart">
+          <table id="approve-table">
+            <thead>
+              <tr>
+                <th>Req ID</th><th>Tanggal</th><th>By</th><th>Dept</th>
+                <th>Items</th><th>Status</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
 
 <script src="app.js"></script>
 </body>
