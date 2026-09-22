@@ -87,4 +87,18 @@ button.primary:hover { background: #15803d; }
 .cart { margin: 12px 0; overflow-x: auto; }
 .cart table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .cart th, .cart td {
- 
+  border-bottom: 1px solid #e2e8f0;
+  padding: 6px 8px; text-align: left;
+}
+.cart th { background: #f1f5f9; font-size: 12px; color: #475569; }
+.cart input, .cart select { padding: 6px 8px; font-size: 13px; }
+.cart .del {
+  width: 32px; padding: 4px; background: #ef4444;
+  border-radius: 6px; font-size: 12px;
+}
+.cart .del:hover { background: #dc2626; }
+
+@media (max-width: 520px) {
+  .grid, .info { grid-template-columns: 1fr; }
+  .info .wide, .grid .wide { grid-column: span 1; }
+}
