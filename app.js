@@ -55,9 +55,11 @@ function showApp() {
   $('#login-screen').classList.add('hidden');
   $('#app').classList.remove('hidden');
   $('#user-label').textContent = `${session.name || session.username} (${session.role})`;
-  $$('.tab[data-role="manager"]').forEach(t => {
-    t.style.display = session.role === 'manager' ? '' : 'none';
-  });
+  const MGR_ROLES = ['manager','gl','group leader','admin','supervisor'];
+$$('.tab[data-role="manager"]').forEach(t => {
+  const r = String(session.role || '').toLowerCase();
+  t.style.display = MGR_ROLES.indexOf(r) !== -1 ? '' : 'none';
+});
   $('#req-by').value = session.username;
 }
 
