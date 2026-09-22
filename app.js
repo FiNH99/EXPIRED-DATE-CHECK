@@ -78,4 +78,332 @@ async function doLogin() {
     $('#login-pass').value = '';
     showApp();
   } catch (err) {
-    a.className = 'alert red'; a
+    a.className = 'alert red'; a.textContent = '❌ ' + err.message;
+  }
+}
+
+$('#logout-btn').addEventListener('click', async () => {
+  try { await apiGet({ action:'logout' }); } catch(e){}
+  localStorage.removeItem('session');
+  session = null;
+  showLogin();
+});
+
+/* ============================================================
+   TABS
+   ============================================================ */
+$$('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.tab').forEach(b => b.classList.remove('active'));
+    $$('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = $('#tab-' + btn.dataset.tab);
+    panel.classList.add('active');
+    const firstInput = panel.querySelector('.barcode-input');
+    if (firstInput) firstInput.focus();
+  });
+});
+
+/* ============================================================
+   LOOKUP BARCODE (untuk exp/soh/rtc/req)
+   ============================================================ */
+const state = { exp:{}, soh:{}, rtc:{}, req:{} };
+
+$$('.barcode-input').forEach(input => {
+  input.addEventListener('keydown', async e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const bc = e.target.value.trim();
+    if (!bc) return;
+    const prefix = input.dataset.lookup;
+    hideAlert(prefix);
+    try {
+      const item = await apiGet({ action:'lookupBarcode', barcode: bc });
+      if (item.error) {
+        state[prefix].barcode = '';
+        const info = $(`#${prefix}-info`);
+        if (info) info.classList.add('hidden');
+        alertBox(prefix, '❌ ' + item.error, 'red');
+        return;
+      }
+      state[prefix].barcode = bc;
+      if (prefix === 'req') {
+        addReqItem(item);
+      } else {
+        showInfo(prefix, item);
+        alertBox(prefix, '✅ ' + item.description, 'green');
+        focusNext(prefix);
+      }
+      input.value = '';
+    } catch (err) {
+      alertBox(prefix, '❌ ' + err.message, 'red');
+    }
+  });
+});
+
+function showInfo(prefix, item) {
+  const box = $(`#${prefix}-info`);
+  if (!box) return;
+  box.querySelector('[data-f="sku"]').textContent  = item.sku;
+  box.querySelector('[data-f="dept"]').textContent = item.dept;
+  box.querySelector('[data-f="desc"]').textContent = item.description;
+  const ret = box.querySelector('[data-f="ret"]');
+  if (ret) ret.textContent = item.returnable ? 'Ya' : 'Tidak';
+  box.classList.remove('hidden');
+}
+function focusNext(prefix) {
+  const map = { exp:'#exp-qty', soh:'#soh-qty', rtc:'#rtc-qty' };
+  if (map[prefix]) $(map[prefix]).focus();
+}
+
+/* ============================================================
+   CEK EXPIRED
+   ============================================================ */
+$('#exp-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!state.exp.barcode) return alertBox('exp', 'Scan barcode dulu!', 'red');
+  const payload = {
+    barcode: state.exp.barcode,
+    qty: $('#exp-qty').value,
+    exp_date: $('#exp-date').value,
+    location: $('#exp-location').value,
+    gondola_number: $('#exp-gondola').value,
+    checked_by: session.username
+  };
+  alertBox('exp', '⏳ Menyimpan...', 'info');
+  try {
+    const out = await apiPost({ action:'saveExpiry' }, payload);
+    if (out.error) return alertBox('exp', '❌ ' + out.error, 'red');
+    alertBox('exp', '✅ Tersimpan (ID ' + out.id + ')', 'green');
+    resetForm('exp');
+  } catch (err) {
+    alertBox('exp', '❌ ' + err.message, 'red');
+  }
+});
+
+/* ============================================================
+   SOH
+   ============================================================ */
+$('#soh-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!state.soh.barcode) return alertBox('soh', 'Scan barcode dulu!', 'red');
+  const payload = {
+    barcode: state.soh.barcode,
+    qty_on_hand: $('#soh-qty').value,
+    location: $('#soh-location').value,
+    gondola_number: $('#soh-gondola').value,
+    note: $('#soh-note').value,
+    counted_by: session.username
+  };
+  alertBox('soh', '⏳ Menyimpan...', 'info');
+  try {
+    const out = await apiPost({ action:'saveSoh' }, payload);
+    if (out.error) return alertBox('soh', '❌ ' + out.error, 'red');
+    alertBox('soh', '✅ Tersimpan (ID ' + out.id + ')', 'green');
+    resetForm('soh');
+  } catch (err) {
+    alertBox('soh', '❌ ' + err.message, 'red');
+  }
+});
+
+/* ============================================================
+   RTC
+   ============================================================ */
+$('#rtc-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!state.rtc.barcode) return alertBox('rtc', 'Scan barcode dulu!', 'red');
+  const payload = {
+    barcode: state.rtc.barcode,
+    qty: $('#rtc-qty').value,
+    reason: $('#rtc-reason').value,
+    input_by: session.username
+  };
+  alertBox('rtc', '⏳ Menyimpan...', 'info');
+  try {
+    const out = await apiPost({ action:'saveRtc' }, payload);
+    if (out.error) return alertBox('rtc', '❌ ' + out.error, 'red');
+    alertBox('rtc', '✅ Tersimpan (ID ' + out.id + ')', 'green');
+    resetForm('rtc');
+  } catch (err) {
+    alertBox('rtc', '❌ ' + err.message, 'red');
+  }
+});
+
+/* ============================================================
+   REQ ORDER
+   ============================================================ */
+const reqItems = [];
+
+function addReqItem(item) {
+  const exist = reqItems.find(x => x.barcode === item.barcode);
+  if (exist) exist.qty += 1;
+  else reqItems.push({
+    barcode: item.barcode, sku: item.sku,
+    description: item.description, qty: 1, unit: 'PCS'
+  });
+  renderReqItems();
+  alertBox('req', '➕ ' + item.description, 'green');
+}
+
+function renderReqItems() {
+  const tb = $('#req-items');
+  tb.innerHTML = '';
+  reqItems.forEach((it, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${it.barcode}</td>
+      <td>${it.sku}</td>
+      <td>${it.description}</td>
+      <td><input type="number" min="1" value="${it.qty}" data-idx="${idx}" class="req-qty"></td>
+      <td>
+        <select data-idx="${idx}" class="req-unit">
+          ${['PCS','BOX','CTN','KG','LTR'].map(u =>
+            `<option ${u===it.unit?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </td>
+      <td><button type="button" data-del="${idx}" class="del">✕</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('.req-qty').forEach(el =>
+    el.addEventListener('input', e => {
+      reqItems[e.target.dataset.idx].qty = Number(e.target.value);
+    }));
+  tb.querySelectorAll('.req-unit').forEach(el =>
+    el.addEventListener('change', e => {
+      reqItems[e.target.dataset.idx].unit = e.target.value;
+    }));
+  tb.querySelectorAll('.del').forEach(el =>
+    el.addEventListener('click', e => {
+      reqItems.splice(Number(e.target.dataset.del), 1);
+      renderReqItems();
+    }));
+}
+
+$('#req-submit').addEventListener('click', async () => {
+  if (reqItems.length === 0) return alertBox('req', 'Belum ada item', 'red');
+  const payload = {
+    requested_by: session.username,
+    dept: $('#req-dept').value,
+    note: $('#req-note').value,
+    items: reqItems
+  };
+  if (!payload.dept) return alertBox('req', 'Dept wajib diisi', 'red');
+  alertBox('req', '⏳ Mengirim...', 'info');
+  try {
+    const out = await apiPost({ action:'saveReqOrder' }, payload);
+    if (out.error) return alertBox('req', '❌ ' + out.error, 'red');
+    alertBox('req', '✅ Terkirim: ' + out.req_id, 'green');
+    reqItems.length = 0;
+    renderReqItems();
+    $('#req-note').value = '';
+  } catch (err) {
+    alertBox('req', '❌ ' + err.message, 'red');
+  }
+});
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function loadDashboard() {
+  const days = $('#dash-days').value || 30;
+  try {
+    const out = await apiGet({ action:'dashboardExpiry', days });
+    if (out.error) return;
+    $('#dash-summary').innerHTML = `
+      <div class="sum red">🔴 Expired: <b>${out.summary.expired}</b></div>
+      <div class="sum yellow">🟡 ≤${out.days_window} hari: <b>${out.summary.soon}</b></div>
+      <div class="sum">📦 Total: <b>${out.summary.total_checked}</b></div>`;
+    fillRow('#dash-expired-table tbody', out.expired);
+    fillRow('#dash-soon-table tbody', out.soon);
+  } catch (err) {
+    console.error(err);
+  }
+}
+function fillRow(sel, list) {
+  const tb = $(sel); tb.innerHTML = '';
+  list.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.barcode}</td><td>${r.description}</td><td>${r.dept}</td>
+      <td>${r.qty}</td><td>${r.exp_date}</td>
+      <td class="${r.days_left < 0 ? 'red' : 'yellow'}">${r.days_left}</td>
+      <td>${r.location}</td><td>${r.gondola_number || '-'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+$('#dash-refresh').addEventListener('click', loadDashboard);
+$('#dash-days').addEventListener('change', loadDashboard);
+document.querySelector('.tab[data-tab="dash"]').addEventListener('click', loadDashboard);
+
+/* ============================================================
+   APPROVAL
+   ============================================================ */
+async function loadApprovals() {
+  try {
+    const out = await apiGet({ action:'listReqOrder', limit:100 });
+    if (out.error) return;
+    const tb = $('#approve-table tbody'); tb.innerHTML = '';
+    out.rows.forEach(r => {
+      const canAct = r.status === 'DRAFT';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.req_id}</td>
+        <td>${r.timestamp ? new Date(r.timestamp).toLocaleString('id-ID') : '-'}</td>
+        <td>${r.requested_by}</td><td>${r.dept}</td>
+        <td>${r.total_items}</td>
+        <td><span class="badge ${String(r.status).toLowerCase()}">${r.status}</span></td>
+        <td>
+          ${canAct ? `
+            <button class="mini green" data-approve="${r.req_id}">Setujui</button>
+            <button class="mini red" data-reject="${r.req_id}">Tolak</button>
+          ` : '-'}
+        </td>`;
+      tb.appendChild(tr);
+    });
+    tb.querySelectorAll('[data-approve]').forEach(b =>
+      b.addEventListener('click', () => setStatus(b.dataset.approve, 'APPROVED')));
+    tb.querySelectorAll('[data-reject]').forEach(b =>
+      b.addEventListener('click', () => {
+        const reason = prompt('Alasan tolak?') || '';
+        setStatus(b.dataset.reject, 'REJECTED', reason);
+      }));
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function setStatus(reqId, status, reason) {
+  const a = $('#approve-alert');
+  a.className = 'alert info'; a.textContent = '⏳ Memproses...'; a.classList.remove('hidden');
+  try {
+    const out = await apiPost({ action:'updateReqStatus' }, {
+      req_id: reqId, status, approved_by: session.username,
+      reject_reason: reason || ''
+    });
+    if (out.error) { a.className='alert red'; a.textContent='❌ '+out.error; return; }
+    a.className = 'alert green'; a.textContent = `✅ ${reqId} → ${status}`;
+    loadApprovals();
+  } catch (err) {
+    a.className = 'alert red'; a.textContent = '❌ ' + err.message;
+  }
+}
+document.querySelector('.tab[data-tab="approve"]')
+  .addEventListener('click', loadApprovals);
+
+/* ============================================================
+   RESET FORM
+   ============================================================ */
+function resetForm(prefix) {
+  const form = $('#' + prefix + '-form');
+  form.reset();
+  const info = $(`#${prefix}-info`);
+  if (info) info.classList.add('hidden');
+  state[prefix].barcode = '';
+  const bc = $(`#${prefix}-barcode`);
+  if (bc) { bc.value = ''; bc.focus(); }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+if (session?.token) showApp(); else showLogin();
