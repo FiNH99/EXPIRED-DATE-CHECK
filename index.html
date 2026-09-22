@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cek Expired</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="card">
+  <h1>🔍 Input Pengecekan Expired</h1>
+
+  <label>Scan / Input Barcode</label>
+  <input id="barcode" autofocus autocomplete="off"
+         placeholder="Scan barcode di sini...">
+
+  <div id="info" class="info hidden">
+    <div class="row"><b>SKU:</b> <span id="f-sku">-</span></div>
+    <div class="row"><b>Dept:</b> <span id="f-dept">-</span></div>
+    <div class="row wide"><b>Desc:</b> <span id="f-desc">-</span></div>
+    <div class="row wide"><b>Returnable:</b> <span id="f-ret">-</span></div>
+  </div>
+
+  <div id="alert" class="alert hidden"></div>
+
+  <form id="form">
+    <div class="grid">
+      <div>
+        <label>Qty</label>
+        <input id="qty" type="number" min="1" required>
+      </div>
+      <div>
+        <label>Exp Date</label>
+        <input id="exp_date" type="date" required>
+      </div>
+      <div>
+        <label>Lokasi</label>
+        <select id="location" required>
+          <option value="">-- pilih --</option>
+          <option value="backroom">Backroom</option>
+          <option value="selling">Selling</option>
+        </select>
+      </div>
+      <div>
+        <label>No. Gondola Expired</label>
+        <input id="gondola_number" placeholder="contoh: G-01">
+      </div>
+    </div>
+    <button type="submit">Simpan Pengecekan</button>
+  </form>
+
+  <p class="footer">v1.0 · backend: Apps Script + Google Sheets</p>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
