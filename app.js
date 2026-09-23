@@ -1,7 +1,7 @@
 // ============================================================
 // KONFIGURASI — GANTI DENGAN URL DEPLOYMENT APPS SCRIPT ANDA
 // ============================================================
-const API_URL = 'https://script.google.com/macros/s/GANTI_DEPLOYMENT_ID/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyqp8Fr12wiiIB5cs_ngcqJjpmsuhfxXKUYlyzkbDFAjnAvYNb2zEsqLwQ-X9yBdPtS/exec';
 // ============================================================
 
 const $  = s => document.querySelector(s);
