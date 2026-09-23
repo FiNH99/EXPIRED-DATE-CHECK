@@ -43,6 +43,7 @@ nav.tabs {
   padding: 8px 14px; border: 1px solid #cbd5e1;
   background: #fff; border-radius: 999px; cursor: pointer;
   font-size: 13px; font-weight: 600; color: #475569;
+  font-family: inherit;
 }
 .tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
 
@@ -70,6 +71,9 @@ input:focus, select:focus {
   outline: 2px solid #2563eb; border-color: #2563eb;
 }
 input[readonly] { background: #f8fafc; color: #64748b; }
+input:disabled, select:disabled {
+  background: #f1f5f9; color: #64748b; cursor: not-allowed;
+}
 .barcode-input { font-size: 18px; padding: 14px; margin-bottom: 12px; }
 
 .info {
@@ -127,6 +131,45 @@ button.link:hover { color: #1d4ed8; background: transparent; }
 }
 .cart .del:hover { background: #dc2626; }
 
+/* ============ SESI CEK EXPIRED ============ */
+.session-box {
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.session-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.session-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.session-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b45309;
+}
+.session-status.ready { color: #15803d; }
+.session-count {
+  text-align: right;
+  font-size: 13px;
+  color: #475569;
+  margin: 8px 0 0;
+}
+
+/* Scan area disabled state */
+.scan-area { transition: opacity .2s; }
+.scan-area.disabled { opacity: .5; pointer-events: none; }
+.scan-area.disabled .barcode-input { background: #f1f5f9; }
+
 /* ============ DASHBOARD ============ */
 .dash-controls {
   display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
@@ -164,6 +207,6 @@ button.mini.red   { background: #dc2626; }
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 520px) {
-  .grid, .info { grid-template-columns: 1fr; }
+  .grid, .info, .session-row { grid-template-columns: 1fr; }
   .info .wide, .grid .wide { grid-column: span 1; }
 }
