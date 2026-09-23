@@ -18,7 +18,7 @@
     <label>Password</label>
     <input id="login-pass" type="password" autocomplete="current-password">
     <button id="login-btn" class="primary">Masuk</button>
-    <p class="hint">Default: admin/admin123 · staff1/staff123</p>
+    <p class="hint">Login pakai akun yang sudah terdaftar</p>
   </div>
 </div>
 
@@ -47,35 +47,78 @@
       <div class="card">
         <h2>🔍 Input Pengecekan Expired</h2>
 
-        <label>Scan / Input Barcode</label>
-        <input class="barcode-input" id="exp-barcode" autofocus autocomplete="off"
-               placeholder="Scan barcode di sini..." data-lookup="exp">
-
-        <div id="exp-info" class="info hidden">
-          <div><b>SKU:</b> <span data-f="sku">-</span></div>
-          <div><b>Dept:</b> <span data-f="dept">-</span></div>
-          <div><b>Desc:</b> <span data-f="desc">-</span></div>
-          <div><b>Returnable:</b> <span data-f="ret">-</span></div>
-        </div>
-
-        <div id="exp-alert" class="alert hidden"></div>
-
-        <form id="exp-form">
-          <div class="grid">
-            <div><label>Qty</label><input id="exp-qty" type="number" min="1" required></div>
-            <div><label>Exp Date</label><input id="exp-date" type="date" required></div>
+        <!-- ===== SESSION: Lokasi & Gondola (diisi sekali) ===== -->
+        <div class="session-box">
+          <div class="session-row">
             <div>
-              <label>Lokasi</label>
+              <label>📍 Lokasi</label>
               <select id="exp-location" required>
                 <option value="">-- pilih --</option>
                 <option value="backroom">Backroom</option>
                 <option value="selling">Selling</option>
               </select>
             </div>
-            <div><label>No. Gondola Expired</label><input id="exp-gondola" placeholder="contoh: G-01"></div>
+            <div>
+              <label>🏷️ No. Gondola Expired</label>
+              <input id="exp-gondola" type="text" inputmode="numeric"
+                     maxlength="3" pattern="[0-9]{1,3}"
+                     placeholder="contoh: 12">
+            </div>
           </div>
-          <button type="submit">Simpan Pengecekan</button>
-        </form>
+          <div class="session-footer">
+            <span id="session-status" class="session-status">
+              ⚠️ Isi Lokasi & No. Gondola dulu
+            </span>
+            <button type="button" id="exp-change-loc" class="link hidden">
+              🔄 Ganti Lokasi/Gondola
+            </button>
+          </div>
+        </div>
+
+        <!-- ===== SCAN AREA ===== -->
+        <div id="exp-scan-area" class="scan-area disabled">
+          <label>Scan / Input Barcode</label>
+          <input class="barcode-input" id="exp-barcode" autocomplete="off"
+                 placeholder="Isi lokasi & gondola dulu..."
+                 data-lookup="exp" disabled>
+
+          <div id="exp-info" class="info hidden">
+            <div><b>Barcode:</b> <span data-f="barcode">-</span></div>
+            <div><b>SKU:</b> <span data-f="sku">-</span></div>
+            <div><b>Dept:</b> <span data-f="dept">-</span></div>
+            <div class="wide"><b>Desc:</b> <span data-f="desc">-</span></div>
+            <div class="wide"><b>Returnable:</b> <span data-f="ret">-</span></div>
+          </div>
+
+          <div id="exp-alert" class="alert hidden"></div>
+
+          <form id="exp-form">
+            <div class="grid">
+              <div><label>Qty</label><input id="exp-qty" type="number" min="1" required></div>
+              <div><label>Exp Date</label><input id="exp-date" type="date" required></div>
+            </div>
+            <button type="submit">Simpan Pengecekan</button>
+          </form>
+        </div>
+
+        <!-- ===== LIST ITEM SESI ===== -->
+        <div id="exp-session-list" class="hidden">
+          <h3 class="sub">📋 Item tersimpan di sesi ini</h3>
+          <div class="cart">
+            <table>
+              <thead>
+                <tr>
+                  <th>Barcode</th><th>Desc</th><th>Qty</th>
+                  <th>Exp</th><th>No. Gondola</th>
+                </tr>
+              </thead>
+              <tbody id="exp-session-body"></tbody>
+            </table>
+          </div>
+          <p class="session-count">
+            Total: <b id="exp-session-count">0</b> item
+          </p>
+        </div>
       </div>
     </section>
 
@@ -89,9 +132,10 @@
                placeholder="Scan barcode di sini..." data-lookup="soh">
 
         <div id="soh-info" class="info hidden">
+          <div><b>Barcode:</b> <span data-f="barcode">-</span></div>
           <div><b>SKU:</b> <span data-f="sku">-</span></div>
           <div><b>Dept:</b> <span data-f="dept">-</span></div>
-          <div><b>Desc:</b> <span data-f="desc">-</span></div>
+          <div class="wide"><b>Desc:</b> <span data-f="desc">-</span></div>
         </div>
 
         <div id="soh-alert" class="alert hidden"></div>
@@ -125,9 +169,10 @@
                placeholder="Scan barcode di sini..." data-lookup="rtc">
 
         <div id="rtc-info" class="info hidden">
+          <div><b>Barcode:</b> <span data-f="barcode">-</span></div>
           <div><b>SKU:</b> <span data-f="sku">-</span></div>
           <div><b>Dept:</b> <span data-f="dept">-</span></div>
-          <div><b>Desc:</b> <span data-f="desc">-</span></div>
+          <div class="wide"><b>Desc:</b> <span data-f="desc">-</span></div>
         </div>
 
         <div id="rtc-alert" class="alert hidden"></div>
