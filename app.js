@@ -7,7 +7,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyqp8Fr12wiiIB5cs_ngcqJ
 const $  = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
-/* ---------- Session ---------- */
+/* ---------- Session user ---------- */
 let session = null;
 try { session = JSON.parse(localStorage.getItem('session') || 'null'); }
 catch(e) { session = null; }
@@ -56,10 +56,10 @@ function showApp() {
   $('#app').classList.remove('hidden');
   $('#user-label').textContent = `${session.name || session.username} (${session.role})`;
   const MGR_ROLES = ['manager','gl','group leader','admin','supervisor'];
-$$('.tab[data-role="manager"]').forEach(t => {
-  const r = String(session.role || '').toLowerCase();
-  t.style.display = MGR_ROLES.indexOf(r) !== -1 ? '' : 'none';
-});
+  $$('.tab[data-role="manager"]').forEach(t => {
+    const r = String(session.role || '').toLowerCase();
+    t.style.display = MGR_ROLES.indexOf(r) !== -1 ? '' : 'none';
+  });
   $('#req-by').value = session.username;
 }
 
@@ -102,12 +102,12 @@ $$('.tab').forEach(btn => {
     const panel = $('#tab-' + btn.dataset.tab);
     panel.classList.add('active');
     const firstInput = panel.querySelector('.barcode-input');
-    if (firstInput) firstInput.focus();
+    if (firstInput && !firstInput.disabled) firstInput.focus();
   });
 });
 
 /* ============================================================
-   LOOKUP BARCODE (untuk exp/soh/rtc/req)
+   LOOKUP BARCODE (semua tab)
    ============================================================ */
 const state = { exp:{}, soh:{}, rtc:{}, req:{} };
 
@@ -146,11 +146,15 @@ $$('.barcode-input').forEach(input => {
 function showInfo(prefix, item) {
   const box = $(`#${prefix}-info`);
   if (!box) return;
-  box.querySelector('[data-f="sku"]').textContent  = item.sku;
-  box.querySelector('[data-f="dept"]').textContent = item.dept;
-  box.querySelector('[data-f="desc"]').textContent = item.description;
-  const ret = box.querySelector('[data-f="ret"]');
-  if (ret) ret.textContent = item.returnable ? 'Ya' : 'Tidak';
+  const setText = (key, val) => {
+    const el = box.querySelector(`[data-f="${key}"]`);
+    if (el) el.textContent = val;
+  };
+  setText('barcode', item.barcode);
+  setText('sku', item.sku);
+  setText('dept', item.dept || '-');
+  setText('desc', item.description);
+  setText('ret', item.returnable ? 'Ya' : 'Tidak');
   box.classList.remove('hidden');
 }
 function focusNext(prefix) {
@@ -159,29 +163,159 @@ function focusNext(prefix) {
 }
 
 /* ============================================================
-   CEK EXPIRED
+   CEK EXPIRED — versi sesi (lokasi & gondola di awal)
    ============================================================ */
+const expSession = {
+  location: '',
+  gondola: '',
+  items: []
+};
+
+function updateExpSessionUI() {
+  const ready = expSession.location && expSession.gondola;
+  const status = $('#session-status');
+  const scanArea = $('#exp-scan-area');
+  const barcode = $('#exp-barcode');
+  const changeBtn = $('#exp-change-loc');
+
+  if (ready) {
+    status.textContent = `✅ Lokasi: ${expSession.location.toUpperCase()} · Gondola: ${expSession.gondola}`;
+    status.className = 'session-status ready';
+    scanArea.classList.remove('disabled');
+    barcode.disabled = false;
+    barcode.placeholder = 'Scan barcode di sini...';
+    changeBtn.classList.remove('hidden');
+    $('#exp-location').disabled = true;
+    $('#exp-gondola').disabled = true;
+    if (document.activeElement !== barcode) barcode.focus();
+  } else {
+    status.textContent = '⚠️ Isi Lokasi & No. Gondola dulu';
+    status.className = 'session-status';
+    scanArea.classList.add('disabled');
+    barcode.disabled = true;
+    barcode.value = '';
+    barcode.placeholder = 'Isi lokasi & gondola dulu...';
+    changeBtn.classList.add('hidden');
+    $('#exp-location').disabled = false;
+    $('#exp-gondola').disabled = false;
+    $('#exp-info').classList.add('hidden');
+    state.exp.barcode = '';
+  }
+}
+
+$('#exp-location').addEventListener('change', e => {
+  expSession.location = e.target.value;
+  updateExpSessionUI();
+  if (expSession.location && !expSession.gondola) $('#exp-gondola').focus();
+});
+
+$('#exp-gondola').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 3);
+  e.target.value = v;
+  expSession.gondola = v;
+  updateExpSessionUI();
+});
+$('#exp-gondola').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    updateExpSessionUI();
+  }
+});
+
+$('#exp-change-loc').addEventListener('click', () => {
+  if (expSession.items.length > 0) {
+    const ok = confirm(
+      `Sudah ada ${expSession.items.length} item tersimpan di sesi ini.\n` +
+      `Yakin ganti lokasi/gondola? Daftar sesi akan direset.`
+    );
+    if (!ok) return;
+  }
+  expSession.location = '';
+  expSession.gondola = '';
+  expSession.items = [];
+  $('#exp-location').value = '';
+  $('#exp-gondola').value = '';
+  $('#exp-form').reset();
+  $('#exp-info').classList.add('hidden');
+  state.exp.barcode = '';
+  renderExpSessionList();
+  updateExpSessionUI();
+  $('#exp-location').focus();
+});
+
+function renderExpSessionList() {
+  const wrap = $('#exp-session-list');
+  const tb = $('#exp-session-body');
+  if (!tb) return;
+  tb.innerHTML = '';
+  if (expSession.items.length === 0) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  expSession.items.forEach(it => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${it.barcode}</td>
+      <td>${it.description}</td>
+      <td>${it.qty}</td>
+      <td>${it.exp_date}</td>
+      <td>${expSession.gondola}</td>
+    `;
+    tb.appendChild(tr);
+  });
+  $('#exp-session-count').textContent = expSession.items.length;
+}
+
 $('#exp-form').addEventListener('submit', async e => {
   e.preventDefault();
-  if (!state.exp.barcode) return alertBox('exp', 'Scan barcode dulu!', 'red');
+
+  if (!expSession.location || !expSession.gondola) {
+    return alertBox('exp', '⚠️ Isi Lokasi & No. Gondola dulu!', 'red');
+  }
+  if (!state.exp.barcode) {
+    return alertBox('exp', 'Scan barcode dulu!', 'red');
+  }
+
   const payload = {
     barcode: state.exp.barcode,
     qty: $('#exp-qty').value,
     exp_date: $('#exp-date').value,
-    location: $('#exp-location').value,
-    gondola_number: $('#exp-gondola').value,
+    location: expSession.location,
+    gondola_number: expSession.gondola,
     checked_by: session.username
   };
+
   alertBox('exp', '⏳ Menyimpan...', 'info');
   try {
-    const out = await apiPost({ action:'saveExpiry' }, payload);
+    const out = await apiPost({ action: 'saveExpiry' }, payload);
     if (out.error) return alertBox('exp', '❌ ' + out.error, 'red');
-    alertBox('exp', '✅ Tersimpan (ID ' + out.id + ')', 'green');
-    resetForm('exp');
+
+    expSession.items.push({
+      barcode: state.exp.barcode,
+      sku: $('#exp-info [data-f="sku"]').textContent,
+      description: $('#exp-info [data-f="desc"]').textContent,
+      qty: payload.qty,
+      exp_date: payload.exp_date
+    });
+    renderExpSessionList();
+
+    alertBox('exp', '✅ Tersimpan. Lanjut scan barang berikutnya.', 'green');
+    resetExpItemForm();
   } catch (err) {
     alertBox('exp', '❌ ' + err.message, 'red');
   }
 });
+
+function resetExpItemForm() {
+  $('#exp-qty').value = '';
+  $('#exp-date').value = '';
+  $('#exp-info').classList.add('hidden');
+  state.exp.barcode = '';
+  const bc = $('#exp-barcode');
+  bc.value = '';
+  bc.focus();
+}
 
 /* ============================================================
    SOH
@@ -393,7 +527,7 @@ document.querySelector('.tab[data-tab="approve"]')
   .addEventListener('click', loadApprovals);
 
 /* ============================================================
-   RESET FORM
+   RESET FORM (SOH & RTC)
    ============================================================ */
 function resetForm(prefix) {
   const form = $('#' + prefix + '-form');
@@ -407,5 +541,3 @@ function resetForm(prefix) {
 
 /* ============================================================
    INIT
-   ============================================================ */
-if (session?.token) showApp(); else showLogin();
