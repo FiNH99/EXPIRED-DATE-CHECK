@@ -1,7 +1,7 @@
 // ============================================================
 // KONFIGURASI — GANTI DENGAN URL DEPLOYMENT APPS SCRIPT ANDA
 // ============================================================
-const API_URL = 'https://script.google.com/macros/s/AKfycbyqp8Fr12wiiIB5cs_ngcqJjpmsuhfxXKUYlyzkbDFAjnAvYNb2zEsqLwQ-X9yBdPtS/exec';
+const API_URL = 'https://script.google.com/macros/s/GANTI_DEPLOYMENT_ID/exec';
 // ============================================================
 
 const $  = s => document.querySelector(s);
@@ -41,6 +41,15 @@ function alertBox(prefix, msg, color) {
 function hideAlert(prefix) {
   const a = $('#' + prefix + '-alert');
   if (a) a.classList.add('hidden');
+}
+
+/* ---------- Tanggal hari ini (YYYY-MM-DD) ---------- */
+function todayISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 /* ============================================================
@@ -107,7 +116,7 @@ $$('.tab').forEach(btn => {
 });
 
 /* ============================================================
-   LOOKUP BARCODE (semua tab)
+   LOOKUP BARCODE
    ============================================================ */
 const state = { exp:{}, soh:{}, rtc:{}, req:{} };
 
@@ -163,45 +172,54 @@ function focusNext(prefix) {
 }
 
 /* ============================================================
-   CEK EXPIRED — versi sesi (lokasi & gondola di awal)
+   CEK EXPIRED — versi sesi
    ============================================================ */
 const expSession = {
+  check_date: '',
   location: '',
   gondola: '',
   items: []
 };
 
 function updateExpSessionUI() {
-  const ready = expSession.location && expSession.gondola;
+  const ready = expSession.check_date && expSession.location && expSession.gondola;
   const status = $('#session-status');
   const scanArea = $('#exp-scan-area');
   const barcode = $('#exp-barcode');
   const changeBtn = $('#exp-change-loc');
 
   if (ready) {
-    status.textContent = `✅ Lokasi: ${expSession.location.toUpperCase()} · Gondola: ${expSession.gondola}`;
+    status.textContent =
+      `✅ ${expSession.check_date} · ${expSession.location.toUpperCase()} · Gondola ${expSession.gondola}`;
     status.className = 'session-status ready';
     scanArea.classList.remove('disabled');
     barcode.disabled = false;
     barcode.placeholder = 'Scan barcode di sini...';
     changeBtn.classList.remove('hidden');
+    $('#exp-check-date').disabled = true;
     $('#exp-location').disabled = true;
     $('#exp-gondola').disabled = true;
     if (document.activeElement !== barcode) barcode.focus();
   } else {
-    status.textContent = '⚠️ Isi Lokasi & No. Gondola dulu';
+    status.textContent = '⚠️ Isi Tanggal, Lokasi & No. Gondola dulu';
     status.className = 'session-status';
     scanArea.classList.add('disabled');
     barcode.disabled = true;
     barcode.value = '';
-    barcode.placeholder = 'Isi lokasi & gondola dulu...';
+    barcode.placeholder = 'Isi sesi dulu...';
     changeBtn.classList.add('hidden');
+    $('#exp-check-date').disabled = false;
     $('#exp-location').disabled = false;
     $('#exp-gondola').disabled = false;
     $('#exp-info').classList.add('hidden');
     state.exp.barcode = '';
   }
 }
+
+$('#exp-check-date').addEventListener('change', e => {
+  expSession.check_date = e.target.value;
+  updateExpSessionUI();
+});
 
 $('#exp-location').addEventListener('change', e => {
   expSession.location = e.target.value;
@@ -226,13 +244,16 @@ $('#exp-change-loc').addEventListener('click', () => {
   if (expSession.items.length > 0) {
     const ok = confirm(
       `Sudah ada ${expSession.items.length} item tersimpan di sesi ini.\n` +
-      `Yakin ganti lokasi/gondola? Daftar sesi akan direset.`
+      `Yakin ganti sesi? Daftar item akan direset.`
     );
     if (!ok) return;
   }
+  const today = todayISO();
+  expSession.check_date = today;
   expSession.location = '';
   expSession.gondola = '';
   expSession.items = [];
+  $('#exp-check-date').value = today;
   $('#exp-location').value = '';
   $('#exp-gondola').value = '';
   $('#exp-form').reset();
@@ -256,6 +277,7 @@ function renderExpSessionList() {
   expSession.items.forEach(it => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td>${it.check_date}</td>
       <td>${it.barcode}</td>
       <td>${it.description}</td>
       <td>${it.qty}</td>
@@ -270,8 +292,8 @@ function renderExpSessionList() {
 $('#exp-form').addEventListener('submit', async e => {
   e.preventDefault();
 
-  if (!expSession.location || !expSession.gondola) {
-    return alertBox('exp', '⚠️ Isi Lokasi & No. Gondola dulu!', 'red');
+  if (!expSession.check_date || !expSession.location || !expSession.gondola) {
+    return alertBox('exp', '⚠️ Isi Tanggal, Lokasi & No. Gondola dulu!', 'red');
   }
   if (!state.exp.barcode) {
     return alertBox('exp', 'Scan barcode dulu!', 'red');
@@ -283,6 +305,7 @@ $('#exp-form').addEventListener('submit', async e => {
     exp_date: $('#exp-date').value,
     location: expSession.location,
     gondola_number: expSession.gondola,
+    check_date: expSession.check_date,
     checked_by: session.username
   };
 
@@ -292,6 +315,7 @@ $('#exp-form').addEventListener('submit', async e => {
     if (out.error) return alertBox('exp', '❌ ' + out.error, 'red');
 
     expSession.items.push({
+      check_date: expSession.check_date,
       barcode: state.exp.barcode,
       sku: $('#exp-info [data-f="sku"]').textContent,
       description: $('#exp-info [data-f="desc"]').textContent,
@@ -543,5 +567,13 @@ function resetForm(prefix) {
    INIT
    ============================================================ */
 if (session?.token) showApp(); else showLogin();
+
+// Auto-fill tanggal pengecekan = hari ini
+(function initCheckDate() {
+  const today = todayISO();
+  $('#exp-check-date').value = today;
+  expSession.check_date = today;
+})();
+
 updateExpSessionUI();
 renderExpSessionList();
