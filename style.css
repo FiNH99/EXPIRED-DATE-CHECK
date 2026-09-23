@@ -141,7 +141,7 @@ button.link:hover { color: #1d4ed8; background: transparent; }
 }
 .session-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
 }
 .session-footer {
@@ -165,7 +165,7 @@ button.link:hover { color: #1d4ed8; background: transparent; }
   margin: 8px 0 0;
 }
 
-/* Scan area disabled state */
+/* Scan area disabled */
 .scan-area { transition: opacity .2s; }
 .scan-area.disabled { opacity: .5; pointer-events: none; }
 .scan-area.disabled .barcode-input { background: #f1f5f9; }
@@ -206,6 +206,9 @@ button.mini.green { background: #16a34a; }
 button.mini.red   { background: #dc2626; }
 
 /* ============ RESPONSIVE ============ */
+@media (min-width: 521px) and (max-width: 720px) {
+  .session-row { grid-template-columns: 1fr 1fr; }
+}
 @media (max-width: 520px) {
   .grid, .info, .session-row { grid-template-columns: 1fr; }
   .info .wide, .grid .wide { grid-column: span 1; }
