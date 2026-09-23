@@ -47,9 +47,13 @@
       <div class="card">
         <h2>🔍 Input Pengecekan Expired</h2>
 
-        <!-- ===== SESSION: Lokasi & Gondola (diisi sekali) ===== -->
+        <!-- SESSION BOX -->
         <div class="session-box">
           <div class="session-row">
+            <div>
+              <label>📅 Tanggal Pengecekan</label>
+              <input id="exp-check-date" type="date" required>
+            </div>
             <div>
               <label>📍 Lokasi</label>
               <select id="exp-location" required>
@@ -67,20 +71,19 @@
           </div>
           <div class="session-footer">
             <span id="session-status" class="session-status">
-              ⚠️ Isi Lokasi & No. Gondola dulu
+              ⚠️ Isi Tanggal, Lokasi & No. Gondola dulu
             </span>
             <button type="button" id="exp-change-loc" class="link hidden">
-              🔄 Ganti Lokasi/Gondola
+              🔄 Ganti Sesi
             </button>
           </div>
         </div>
 
-        <!-- ===== SCAN AREA ===== -->
+        <!-- SCAN AREA -->
         <div id="exp-scan-area" class="scan-area disabled">
           <label>Scan / Input Barcode</label>
           <input class="barcode-input" id="exp-barcode" autocomplete="off"
-                 placeholder="Isi lokasi & gondola dulu..."
-                 data-lookup="exp" disabled>
+                 placeholder="Isi sesi dulu..." data-lookup="exp" disabled>
 
           <div id="exp-info" class="info hidden">
             <div><b>Barcode:</b> <span data-f="barcode">-</span></div>
@@ -101,15 +104,15 @@
           </form>
         </div>
 
-        <!-- ===== LIST ITEM SESI ===== -->
+        <!-- LIST ITEM SESI -->
         <div id="exp-session-list" class="hidden">
           <h3 class="sub">📋 Item tersimpan di sesi ini</h3>
           <div class="cart">
             <table>
               <thead>
                 <tr>
-                  <th>Barcode</th><th>Desc</th><th>Qty</th>
-                  <th>Exp</th><th>No. Gondola</th>
+                  <th>Tanggal</th><th>Barcode</th><th>Desc</th>
+                  <th>Qty</th><th>Exp</th><th>Gondola</th>
                 </tr>
               </thead>
               <tbody id="exp-session-body"></tbody>
